@@ -1,0 +1,256 @@
+-- Presiona V para usar aimbot y Q para desactivarlo
+loadstring(game:HttpGet("https://pastebin.com/raw/uw2P2fbY", true))()
+
+JUGADOR = game.Players.LocalPlayer
+MOUSE = JUGADOR:GetMouse()
+CC = game.Workspace.CurrentCamera
+
+HABILITADO = false
+ESP_HABILITADO = false
+
+_G.TODOS_CONTRA_TODOS = false
+
+_G.LLAVE = 118
+_G.ESP_LLAVE = 49
+_G.CAMBIAR_APUNTE = 'q'
+
+_G.APUNTAR_A = 'Cabeza'
+
+wait(1)
+
+function ObtenerJugadorMasCercanoAlMouse()
+    local JUGADORES = {}
+    local JUGADOR_RETENIDO = {}
+    local DISTANCIAS = {}
+    
+    for i, v in pairs(game.Players:GetPlayers()) do
+        if v ~= JUGADOR then
+            table.insert(JUGADORES, v)
+        end
+    end
+    
+    for i, v in pairs(JUGADORES) do
+        if _G.TODOS_CONTRA_TODOS == false then
+            if v and (v.Character) ~= nil and v.TeamColor ~= JUGADOR.TeamColor then
+                local APUNTAR = v.Character:FindFirstChild(_G.APUNTAR_A)
+                if APUNTAR ~= nil then
+                    local DISTANCIA = (APUNTAR.Position - game.Workspace.CurrentCamera.CoordinateFrame.p).magnitude
+                    local RAYO = Ray.new(game.Workspace.CurrentCamera.CoordinateFrame.p, (MOUSE.Hit.p - CC.CoordinateFrame.p).unit * DISTANCIA)
+                    local GOLPE, POSICION = game.Workspace:FindPartOnRay(RAYO, game.Workspace)
+                    local DIFERENCIA = math.floor((POSICION - APUNTAR.Position).magnitude)
+                    
+                    JUGADOR_RETENIDO[v.Name .. i] = {}
+                    JUGADOR_RETENIDO[v.Name .. i].dist = DISTANCIA
+                    JUGADOR_RETENIDO[v.Name .. i].plr = v
+                    JUGADOR_RETENIDO[v.Name .. i].diff = DIFERENCIA
+                    
+                    table.insert(DISTANCIAS, DIFERENCIA)
+                end
+            end
+        elseif _G.TODOS_CONTRA_TODOS == true then
+            local APUNTAR = v.Character:FindFirstChild(_G.APUNTAR_A)
+            if APUNTAR ~= nil then
+                local DISTANCIA = (APUNTAR.Position - game.Workspace.CurrentCamera.CoordinateFrame.p).magnitude
+                local RAYO = Ray.new(game.Workspace.CurrentCamera.CoordinateFrame.p, (MOUSE.Hit.p - CC.CoordinateFrame.p).unit * DISTANCIA)
+                local GOLPE, POSICION = game.Workspace:FindPartOnRay(RAYO, game.Workspace)
+                local DIFERENCIA = math.floor((POSICION - APUNTAR.Position).magnitude)
+                
+                JUGADOR_RETENIDO[v.Name .. i] = {}
+                JUGADOR_RETENIDO[v.Name .. i].dist = DISTANCIA
+                JUGADOR_RETENIDO[v.Name .. i].plr = v
+                JUGADOR_RETENIDO[v.Name .. i].diff = DIFERENCIA
+                
+                table.insert(DISTANCIAS, DIFERENCIA)
+            end
+        end
+    end
+    
+    if unpack(DISTANCIAS) == nil then
+        return false
+    end
+    
+    local L_DISTANCIA = math.floor(math.min(unpack(DISTANCIAS)))
+    if L_DISTANCIA > 20 then
+        return false
+    end
+    
+    for i, v in pairs(JUGADOR_RETENIDO) do
+        if v.diff == L_DISTANCIA then
+            return v.plr
+        end
+    end
+    
+    return false
+end
+
+GUI_PRINCIPAL = Instance.new('ScreenGui', game.CoreGui)
+GUI_OBJETIVO = Instance.new('TextLabel', GUI_PRINCIPAL)
+GUI_APUNTAR = Instance.new('TextLabel', GUI_PRINCIPAL)
+
+GUI_PRINCIPAL.Name = 'AIMBOT'
+
+GUI_OBJETIVO.Size = UDim2.new(0,200,0,30)
+GUI_OBJETIVO.BackgroundTransparency = 0.5
+GUI_OBJETIVO.BackgroundColor = BrickColor.new('Fossil')
+GUI_OBJETIVO.BorderSizePixel = 0
+GUI_OBJETIVO.Position = UDim2.new(0.5,-100,0,0)
+GUI_OBJETIVO.Text = 'AIMBOT : DESACTIVADO'
+GUI_OBJETIVO.TextColor3 = Color3.new(1,1,1)
+GUI_OBJETIVO.TextStrokeTransparency = 1
+GUI_OBJETIVO.TextWrapped = true
+GUI_OBJETIVO.FontSize = 'Size24'
+GUI_OBJETIVO.Font = 'SourceSansBold'
+
+GUI_APUNTAR.Size = UDim2.new(0,200,0,20)
+GUI_APUNTAR.BackgroundTransparency = 0.5
+GUI_APUNTAR.BackgroundColor = BrickColor.new('Fossil')
+GUI_APUNTAR.BorderSizePixel = 0
+GUI_APUNTAR.Position = UDim2.new(0.5,-100,0,30)
+GUI_APUNTAR.Text = 'APUNTANDO A : CABEZA'
+GUI_APUNTAR.TextColor3 = Color3.new(1,1,1)
+GUI_APUNTAR.TextStrokeTransparency = 1
+GUI_APUNTAR.TextWrapped = true
+GUI_APUNTAR.FontSize = 'Size18'
+GUI_APUNTAR.Font = 'SourceSansBold'
+
+local SEGUIMIENTO = false
+
+function CREAR(BASE, EQUIPO)
+    local ESP_PRINCIPAL = Instance.new('BillboardGui', JUGADOR.PlayerGui)
+    local ESP_PUNTO = Instance.new('Frame', ESP_PRINCIPAL)
+    local ESP_NOMBRE = Instance.new('TextLabel', ESP_PRINCIPAL)
+    
+    ESP_PRINCIPAL.Name = 'ESP'
+    ESP_PRINCIPAL.Adornee = BASE
+    ESP_PRINCIPAL.AlwaysOnTop = true
+    ESP_PRINCIPAL.ExtentsOffset = Vector3.new(0, 1, 0)
+    ESP_PRINCIPAL.Size = UDim2.new(0, 5, 0, 5)
+    
+    ESP_PUNTO.Name = 'PUNTO'
+    ESP_PUNTO.BackgroundColor = BrickColor.new('Bright red')
+    ESP_PUNTO.BackgroundTransparency = 0.3
+    ESP_PUNTO.BorderSizePixel = 0
+    ESP_PUNTO.Position = UDim2.new(-0.5, 0, -0.5, 0)
+    ESP_PUNTO.Size = UDim2.new(2, 0, 2, 0)
+    ESP_PUNTO.Visible = true
+    ESP_PUNTO.ZIndex = 10
+    
+    ESP_NOMBRE.Name = 'NOMBRE'
+    ESP_NOMBRE.BackgroundColor3 = Color3.new(255, 255, 255)
+    ESP_NOMBRE.BackgroundTransparency = 1
+    ESP_NOMBRE.BorderSizePixel = 0
+    ESP_NOMBRE.Position = UDim2.new(0, 0, 0, -40)
+    ESP_NOMBRE.Size = UDim2.new(1, 0, 10, 0)
+    ESP_NOMBRE.Visible = true
+    ESP_NOMBRE.ZIndex = 10
+    ESP_NOMBRE.Font = 'ArialBold'
+    ESP_NOMBRE.FontSize = 'Size14'
+    ESP_NOMBRE.Text = BASE.Parent.Name:upper()
+    ESP_NOMBRE.TextColor = BrickColor.new('Bright red')
+end
+
+function BORRAR()
+    for _,v in pairs(JUGADOR.PlayerGui:children()) do
+        if v.Name == 'ESP' and v:IsA('BillboardGui') then
+            v:Destroy()
+        end
+    end
+end
+
+function BUSCAR()
+    BORRAR()
+    SEGUIMIENTO = true
+    spawn(function()
+        while wait() do
+            if SEGUIMIENTO then
+                BORRAR()
+                for i,v in pairs(game.Players:GetChildren()) do
+                    if v.Character and v.Character:FindFirstChild('Head') then
+                        if _G.TODOS_CONTRA_TODOS == false then
+                            if v.TeamColor ~= JUGADOR.TeamColor then
+                                if v.Character:FindFirstChild('Head') then
+                                    CREAR(v.Character.Head, true)
+                                end
+                            end
+                        else
+                            if v.Character:FindFirstChild('Head') then
+                                CREAR(v.Character.Head, true)
+                            end
+                        end
+                    end
+                end
+            end
+            wait(1)
+        end
+    end)
+end
+
+MOUSE.KeyDown:connect(function(KEY)
+    KEY = KEY:lower():byte()
+    if KEY == _G.LLAVE then
+        HABILITADO = true
+    end
+end)
+
+MOUSE.KeyUp:connect(function(KEY)
+    KEY = KEY:lower():byte()
+    if KEY == _G.LLAVE then
+        HABILITADO = false
+    end
+end)
+
+MOUSE.KeyDown:connect(function(KEY)
+    KEY = KEY:lower():byte()
+    if KEY == _G.ESP_LLAVE then
+        if ESP_HABILITADO == false then
+            BUSCAR()
+            ESP_HABILITADO = true
+            print('ESP : ACTIVADO')
+        elseif ESP_HABILITADO == true then
+            wait()
+            BUSCAR()
+            SEGUIMIENTO = false
+            ESP_HABILITADO = false
+            print('ESP : DESACTIVADO')
+        end
+    end
+end)
+
+MOUSE.KeyDown:connect(function(KEY)
+    if KEY == _G.CAMBIAR_APUNTE then
+        if _G.APUNTAR_A == 'Cabeza' then
+            _G.APUNTAR_A = 'Torso'
+            GUI_APUNTAR.Text = 'APUNTANDO A : TORSO'
+        elseif _G.APUNTAR_A == 'Torso' then
+            _G.APUNTAR_A = 'Cabeza'
+            GUI_APUNTAR.Text = 'APUNTANDO A : CABEZA'
+        end
+    end
+end)
+
+game:GetService('RunService').RenderStepped:connect(function()
+    if HABILITADO then
+        local OBJETIVO = ObtenerJugadorMasCercanoAlMouse()
+        if (OBJETIVO ~= false) then
+            local APUNTAR = OBJETIVO.Character:FindFirstChild(_G.APUNTAR_A)
+            if APUNTAR then
+                CC.CoordinateFrame = CFrame.new(CC.CoordinateFrame.p, APUNTAR.CFrame.p)
+            end
+            GUI_OBJETIVO.Text = 'AIMBOT : '.. OBJETIVO.Name:sub(1, 5)
+        else
+            GUI_OBJETIVO.Text = 'AIMBOT : DESACTIVADO'
+        end
+    end
+end)
+
+repeat
+    wait()
+    if ESP_HABILITADO == true then
+        BUSCAR()
+    end
+until ESP_HABILITADO == false
+
+wait()
+_G.TODOS_CONTRA_TODOS = false
+_G.LLAVE = 118 -- ALT IZQUIERDO
+_G.ESP_LLAVE = 49 -- CTRL DERECHO
